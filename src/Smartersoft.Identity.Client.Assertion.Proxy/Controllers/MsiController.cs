@@ -30,12 +30,28 @@ namespace Smartersoft.Identity.Client.Assertion.Proxy.Controllers
             _tokenCredential = tokenCredential;
         }
 
-        /// <summary>
-        /// Forward the call to the Microsoft Token Service using DefaultAzureCredential
-        /// </summary>
-        /// <param name="msiRequest">MSI request as if this would come from CloudShell</param>
-        /// <param name="cancellationToken"></param>
-        [HttpPost("forward")]
+		/// <summary>
+		/// Forward the call to the Microsoft Token Service using DefaultAzureCredential
+		/// </summary>
+		/// <param name="msiRequest">MSI request as if this would come from CloudShell</param>
+		/// <param name="cancellationToken"></param>
+		[HttpGet("forward")]
+		[ProducesResponseType(typeof(Models.MsiResponse), 200)]
+		public async Task<IActionResult> ForwardGet([FromQuery] Models.MsiRequest msiRequest, CancellationToken cancellationToken = default)
+		{
+			_logger.LogInformation("MSI request for {resource}", msiRequest.Resource);
+
+			var tokenResult = await _tokenCredential.GetTokenAsync(new Azure.Core.TokenRequestContext(new[] { FixResourceUrl(msiRequest.Resource) }), cancellationToken);
+
+			return Ok(Models.MsiResponse.FromAzureAccessToken(tokenResult, msiRequest.Resource));
+		}
+
+		/// <summary>
+		/// Forward the call to the Microsoft Token Service using DefaultAzureCredential
+		/// </summary>
+		/// <param name="msiRequest">MSI request as if this would come from CloudShell</param>
+		/// <param name="cancellationToken"></param>
+		[HttpPost("forward")]
         [ProducesResponseType(typeof(Models.MsiResponse), 200)]
         public async Task<IActionResult> Forward([FromForm] Models.MsiRequest msiRequest, CancellationToken cancellationToken = default)
         {
